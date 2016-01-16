@@ -23,6 +23,10 @@ engine = create_engine(database_uri)
 Session = sessionmaker(bind=engine)
 session=Session()
 
+'''
+Finds the frequency of crimes per day for all years from 2003-2015
+Friday is a very popular day to commit a crime
+'''
 def crimes_per_day_all():
 
   crime_count=[]
@@ -36,7 +40,8 @@ def crimes_per_day_all():
 
   fig = plt.figure()
   ax = fig.add_subplot(111)
-  x=range(0,7)
+  #Sunday = 1, .... Saturday = 7
+  x=range(1,8)
   l = plt.plot(x, crime_count, 'r--', linewidth=1)
   plt.xlabel('Day')
   plt.ylabel('Count')
@@ -49,7 +54,11 @@ def crimes_per_day_all():
 
   plt.show()
 
-def crimes_per_day_year():
+'''
+Finds the frequency of crimes per day per year and plots them all to see if Friday is still 
+a good day to commit a crime. (It is)
+'''
+def crimes_per_day_per_year():
 
   crime_count_year=[]
   for year in range(2003, 2016):
@@ -64,8 +73,8 @@ def crimes_per_day_year():
     crime_count_year.append(crime_count)
 
   fig = plt.figure()
-  ax = fig.add_subplot(111)
-  x=range(0,7)
+  #Sunday = 1, .... Saturday = 7
+  x=range(1,8)
   # These are the colors that will be used in the plot
   color_sequence = ['#1f77b4', '#aec7e8', '#ff7f0e', '#ffbb78', '#2ca02c', \
                     '#98df8a', '#d62728', '#ff9896', '#9467bd', '#c5b0d5', \
@@ -79,9 +88,9 @@ def crimes_per_day_year():
   plt.xlabel('Day')
   plt.ylabel('Count')
   plt.title(r'Number of Crimes per day')
-
   # Tweak spacing to prevent clipping of ylabel
   plt.subplots_adjust(left=0.15)
   plt.show()
+
 if __name__ == '__main__':
-  crimes_per_day_year()
+  crimes_per_day_per_year()

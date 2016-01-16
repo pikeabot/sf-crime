@@ -41,18 +41,21 @@ class Train(Base):
     id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
     date = Column(Date)
     category = Column(String(50))
+    cat_num = Column(Integer)
     desc = Column(String(200))
     day = Column(String(20))
+    day_num = Column(Integer)
     pd_district = Column(String(20))
+    pd_district_num = Column(Integer)
     resolution = Column(String(50))
     address = Column (String(50))
     x = Column(Float)
     y = Column(Float)
     def __repr__(self):
-        return "<Train(date='%s', category='%s', desc='%s', day='%s', pd_district='%s', \
-                    resolution='%s', address='%s', x='%d', y='%d')>" % \
-                    (self.date, self.category, self.desc, self.day, self.pd_district, self.resolution, \
-                    self.address, self.x, self.y)
+        return "<Train(date='%s', category='%s', cat_num=%d, desc='%s', day='%s', day_num=%d, pd_district='%s', \
+                    'pd_district_num=%d', resolution='%s', address='%s', x='%d', y='%d')>" % \
+                    (self.date, self.category, self.cat_num, self.desc, self.day, self.day_num, self.pd_district, \
+                        self.pd_district_num, self.resolution, self.address, self.x, self.y)
 
 
 class Test(Base):
@@ -60,13 +63,17 @@ class Test(Base):
     id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
     date = Column(Date)
     day = Column(String(20))
+    day_num = Column(Integer)
     pd_district = Column(String(20))
+    pd_district_num = Column(Integer)
     address = Column (String(50))
     x = Column(Float)
     y = Column(Float)
     def __repr__(self):
-        return "<Train(date='%s', day='%s', pd_district='%s', address='%s', x='%d', y='%d')>" % \
-                    (self.date, self.day, self.pd_district, self.address, self.x, self.y)
+        return "<Train(date='%s', day='%s', day_num=%d, pd_district='%s', 'pd_district_num=%d', \
+                    address='%s', x='%d', y='%d')>" % \
+                    (self.date, self.day, self.day_num, self.pd_district, self.pd_district_num, \
+                    self.address, self.x, self.y)
 
 #create tables Node and node_to_node
 Base.metadata.create_all(engine, checkfirst=True)
@@ -78,6 +85,49 @@ engine = create_engine('postgresql://train:kaggle@localhost/{0}'.format(sys.argv
 Session = sessionmaker(bind=engine)
 session=Session()
 
+categories = ['PROSTITUTION', \
+                'VANDALISM', \
+                'SUSPICIOUS OCC', \
+                'BURGLARY', \
+                'LARCENY/THEFT', \
+                'OTHER OFFENSES', \
+                'STOLEN PROPERTY', \
+                'TRESPASS', \
+                'WARRANTS', \
+                'FORGERY/COUNTERFEITING', \
+                'KIDNAPPING', \
+                'WEAPON LAWS', \
+                'SEX OFFENSES FORCIBLE', \
+                'DISORDERLY CONDUCT', \
+                'BRIBERY', \
+                'DRUNKENNESS', \
+                'SECONDARY CODES', \
+                'MISSING PERSON', \
+                'EXTORTION', \
+                'NON-CRIMINAL', \
+                'EMBEZZLEMENT', \
+                'TREA', \
+                'RECOVERED VEHICLE', \
+                'ARSON', \
+                'PORNOGRAPHY/OBSCENE MAT', \
+                'GAMBLING', \
+                'VEHICLE THEFT', \
+                'LOITERING', \
+                'ASSAULT', \
+                'BAD CHECKS', \
+                'FRAUD', \
+                'ROBBERY', \
+                'DRUG/NARCOTIC', \
+                'RUNAWAY', \
+                'SEX OFFENSES NON FORCIBLE', \
+                'DRIVING UNDER THE INFLUENCE', \
+                'FAMILY OFFENSES', \
+                'LIQUOR LAWS', \
+                'SUICIDE']
+
+days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+pd_districts = ['BAYVIEW', 'INGLESIDE', 'NORTHERN', 'CENTRAL', 'MISSION', 'SOUTHERN', \
+                    'TENDERLOIN', 'PARK', 'RICHMOND', 'TARAVAL']
 
 f=open('data/train.csv', 'rb')
 reader = csv.reader(f)
@@ -86,9 +136,9 @@ for r in reader:
   if r[0]!='Dates':
     date=datetime.strptime(r[0], '%Y-%m-%d %H:%M:%S')
     session.add(Train(date=date, \
-              category=r[1], \
-              desc=r[2], \
-              day=r[3], pd_district=r[4], resolution=r[5], address=r[6], \
+              category=r[1], cat_num=categories.index(r[1]), desc=r[2], \
+              day=r[3], day_num=days.index(r[3]), pd_district=r[4], \
+              pd_district_num=pd_districts.index(r[4]), resolution=r[5], address=r[6], \
               x=r[7], y=r[8]))
 
     session.commit()
@@ -96,20 +146,18 @@ for r in reader:
 f.close()
 
 '''
-f=open('test.json', 'rb')
-test_lines=''.join(f.readlines())
-jtlines = json.loads(test_lines)
+f=open('data/test.csv', 'rb')
+reader = csv.reader(f)
+i=0
+for r in reader:
+  if r[0]!='Dates':
+    date=datetime.strptime(r[0], '%Y-%m-%d %H:%M:%S')
+    session.add(Test(date=date, \
+              day=r[2], day_num=days.index(r[2]), pd_district=r[3], \
+              pd_district_num=pd_districts.index(r[3]), address=r[4], \
+              x=r[5], y=r[6]))
 
-for jt in jtlines:
-  #add recipe
-  new_test_recipe = Test(recipe_id=jt['id'], ingredients=[]) 
-  for i in jt['ingredients']:
-    new_test_ingredient = Test_Ingredients(ingredient=i)
-    new_test_recipe.ingredients.append(new_test_ingredient)
-    session.add(new_test_ingredient)
-  session.add(new_test_recipe)
-
-  session.commit()
+    session.commit()
 
 f.close()
 '''

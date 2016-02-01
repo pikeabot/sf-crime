@@ -1,4 +1,4 @@
-import os, sys
+import os, sys, operator
 from os import listdir
 from os.path import isfile, join
 import csv
@@ -12,8 +12,9 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects import postgresql
 from models import *
 from nltk import *
+import numpy as np
 import matplotlib.pyplot as plt
-
+from datetime import datetime
 Base = declarative_base()
 
 database_uri='postgresql://{0}:{1}@localhost/{2}'.format(sys.argv[1], sys.argv[2], sys.argv[3])
@@ -63,13 +64,13 @@ def crimes_per_day_per_year():
   crime_count_year=[]
   for year in range(2003, 2016):
     crime_count=[]
-    crime_count.append(session.query(Train).filter(Train.day=='Sunday', extract('year', Train.date) == year).count())
-    crime_count.append(session.query(Train).filter(Train.day=='Monday', extract('year', Train.date) == year).count())
-    crime_count.append(session.query(Train).filter(Train.day=='Tuesday', extract('year', Train.date) == year).count())
-    crime_count.append(session.query(Train).filter(Train.day=='Wednesday', extract('year', Train.date) == year).count())
-    crime_count.append(session.query(Train).filter(Train.day=='Thursday', extract('year', Train.date) == year).count())
-    crime_count.append(session.query(Train).filter(Train.day=='Friday', extract('year', Train.date) == year).count())
-    crime_count.append(session.query(Train).filter(Train.day=='Saturday', extract('year', Train.date) == year).count())
+    crime_count.append(session.query(Train).filter(Train.day=='Sunday', extract('year', Train.datetime) == year).count())
+    crime_count.append(session.query(Train).filter(Train.day=='Monday', extract('year', Train.datetime) == year).count())
+    crime_count.append(session.query(Train).filter(Train.day=='Tuesday', extract('year', Train.datetime) == year).count())
+    crime_count.append(session.query(Train).filter(Train.day=='Wednesday', extract('year', Train.datetime) == year).count())
+    crime_count.append(session.query(Train).filter(Train.day=='Thursday', extract('year', Train.datetime) == year).count())
+    crime_count.append(session.query(Train).filter(Train.day=='Friday', extract('year', Train.datetime) == year).count())
+    crime_count.append(session.query(Train).filter(Train.day=='Saturday', extract('year', Train.datetime) == year).count())
     crime_count_year.append(crime_count)
 
   fig = plt.figure()
@@ -92,5 +93,40 @@ def crimes_per_day_per_year():
   plt.subplots_adjust(left=0.15)
   plt.show()
 
+def most_freq_crimes():
+  totals=[]
+  for c in CATEGORIES:
+    totals.append((c, session.query(Train).filter(Train.category==c).count()))
+  totals.sort(key=operator.itemgetter(1), reverse=True)
+  s=sum(j for i, j in totals)
+  
+  for t in totals:
+    print '{0} {1} {2}'.format(t[0], str(t[1]), str(float(t[1])/s))
+
+def crime_by_time(category):
+  counts=[]
+  for hour in range(0, 24):
+    counts.append(session.query(Train.datetime).filter(Train.category == category, extract('hour', Train.datetime) == hour).count())
+
+  fig = plt.figure()
+  #Sunday = 1, .... Saturday = 7
+  x=range(0,24)
+
+  # These are the colors that will be used in the plot
+  color_sequence = ['#1f77b4', '#aec7e8', '#ff7f0e', '#ffbb78', '#2ca02c', \
+                    '#98df8a', '#d62728', '#ff9896', '#9467bd', '#c5b0d5', \
+                    '#8c564b', '#c49c94', '#e377c2', '#f7b6d2', '#7f7f7f', \
+                    '#c7c7c7', '#bcbd22', '#dbdb8d', '#17becf', '#9edae5',
+                    '#98df8a', '#d62728', '#ff9896', '#9467bd']
+
+  i=0
+  plt.plot(x, counts, 'ro', linewidth=1, color=color_sequence[i])
+  plt.xlabel('Hour')
+  plt.ylabel('Count')
+  plt.title(r'Number of Crimes per Hour')
+  # Tweak spacing to prevent clipping of ylabel
+  plt.subplots_adjust(left=0.15)
+  plt.show()
+  
 if __name__ == '__main__':
-  crimes_per_day_per_year()
+  crime_by_time('PROSTITUTION')
